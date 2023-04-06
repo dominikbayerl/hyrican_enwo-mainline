@@ -12,6 +12,9 @@
 #include "pm8998.dtsi"
 #include "pmi8998.dtsi"
 
+/delete-node/ &cont_splash_mem;
+/delete-node/ &gpu_mem;
+
 / {
 	model = "Hyrican ENWO Pad";
 	compatible = "hyrican,enwo", "qcom,sdm845";
@@ -38,10 +41,22 @@
 	};
 
 	reserved-memory {
-		framebuffer_region@80100000 {
+		cont_splash_mem: framebuffer0@80100000 {
 			reg = <0x0 0x80100000 0x0 0xD00000>;
 			no-map;
 		};
+
+		gpu_mem: memory@85F00000 {
+			reg = <0 0x85F00000 0 0x10000>;
+			no-map;
+		};
+	};
+
+	sn65dsi86_refclk: sn65dsi86-refclk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+
+		clock-frequency = <19200000>;
 	};
 
 	vph_pwr: vph-pwr-regulator {
@@ -133,7 +148,7 @@
 
 &adsp_pas {
 	status = "okay";
-	firmware-name = "qcom/sdm845/adsp.mdt";
+	firmware-name = "qcom/sdm845/adsp.mbn";
 };
 
 &apps_rsc {
@@ -432,6 +447,10 @@
 	};
 };
 
+&cdsp_pas {
+	status = "okay";
+};
+
 &gcc {
 	protected-clocks = <GCC_QSPI_CORE_CLK>,
 			   <GCC_QSPI_CORE_CLK_SRC>,
@@ -449,16 +468,17 @@
 };
 
 &gpu {
-	status = "disabled";
-};
-
-&i2c10 {
 	status = "okay";
-	clock-frequency = <400000>;
+	zap-shader {
+		memory-region = <&gpu_mem>;
+		firmware-name = "qcom/sdm845/a630_zap.mbn";
+	};
 };
 
 &ipa {
+	qcom,gsi-loader = "self";
 	status = "okay";
+	firmware-name = "qcom/sdm850/hyrican/enwo/ipa_fws.elf";
 	memory-region = <&ipa_fw_mem>;
 };
 
@@ -467,7 +487,7 @@
 };
 
 &mss_pil {
-	status = "disabled";
+	status = "okay";
 };
 
 &pm8998_adc {
@@ -611,12 +631,25 @@
 	status = "okay";
 };
 
+&crypto {
+	/* FIXME: qce_start triggers an SError */
+	status = "disable";
+};
+
 &wifi {
 	status = "okay";
+
 	vdd-0.8-cx-mx-supply = <&vreg_l5a_0p8>;
 	vdd-1.8-xo-supply = <&vreg_l7a_1p8>;
 	vdd-1.3-rfa-supply = <&vreg_l17a_1p3>;
 	vdd-3.3-ch0-supply = <&vreg_l25a_3p3>;
+	vdd-3.3-ch1-supply = <&vreg_l23a_3p3>;
+
+	qcom,snoc-host-cap-8bit-quirk;
+};
+
+&llcc {
+	status = "disabled";
 };
 
 &ufs_mem_hc {
@@ -625,4 +658,11 @@
 
 &tlmm {
 	gpio-reserved-ranges = <0 4>, <81 4>;
+
+	sn65dsi86_pin_active: sn65dsi86-enable-state {
+		pins = "gpio96";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
 };
