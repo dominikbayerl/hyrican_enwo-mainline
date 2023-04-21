@@ -14,15 +14,13 @@
 
 /delete-node/ &cont_splash_mem;
 /delete-node/ &gpu_mem;
+/delete-node/ &ipa_fw_mem;
+/delete-node/ &ipa_gsi_mem;
 
 / {
 	model = "Hyrican ENWO Pad";
 	compatible = "hyrican,enwo", "qcom,sdm845";
 	chassis-type = "convertible";
-
-	aliases {
-		serial0 = &uart9;
-	};
 
 	chosen {
 		#address-cells = <2>;
@@ -48,6 +46,11 @@
 
 		gpu_mem: memory@85F00000 {
 			reg = <0 0x85F00000 0 0x10000>;
+			no-map;
+		};
+
+		ipa_fw_mem: memory@8c517000 {
+			reg = <0 0x8c517000 0 0x5a000>;
 			no-map;
 		};
 	};
@@ -148,7 +151,7 @@
 
 &adsp_pas {
 	status = "okay";
-	firmware-name = "qcom/sdm845/adsp.mbn";
+	firmware-name = "qcom/sdm850/hyrican/enwo/qcadsp850.mbn";
 };
 
 &apps_rsc {
@@ -448,6 +451,7 @@
 };
 
 &cdsp_pas {
+	firmware-name = "qcom/sdm850/hyrican/enwo/qccdsp850.mbn";
 	status = "okay";
 };
 
@@ -463,10 +467,6 @@
 	status = "okay";
 };
 
-&dispcc {
-	status = "disabled";
-};
-
 &gpu {
 	status = "okay";
 	zap-shader {
@@ -475,15 +475,20 @@
 	};
 };
 
+&i2c10 {
+	status = "okay";
+	clock-frequency = <400000>;
+};
+
 &ipa {
 	qcom,gsi-loader = "self";
-	status = "okay";
+	status = "disabled";
 	firmware-name = "qcom/sdm850/hyrican/enwo/ipa_fws.elf";
 	memory-region = <&ipa_fw_mem>;
 };
 
 &mdss {
-	status = "disabled";
+	status = "okay";
 };
 
 &mss_pil {
@@ -570,16 +575,8 @@
 	status = "okay";
 };
 
-&sdhc_2 {
-	status = "disabled";
-};
-
-&uart9 {
-	status = "okay";
-};
-
 &ufs_mem_hc {
-	status = "disabled";
+	status = "okay";
 
 	reset-gpios = <&tlmm 150 GPIO_ACTIVE_LOW>;
 
@@ -629,6 +626,7 @@
 
 &venus {
 	status = "okay";
+	firmware-name = "qcom/sdm850/hyrican/enwo/qcvss850.mbn";
 };
 
 &crypto {
@@ -649,10 +647,6 @@
 };
 
 &llcc {
-	status = "disabled";
-};
-
-&ufs_mem_hc {
 	status = "disabled";
 };
 
